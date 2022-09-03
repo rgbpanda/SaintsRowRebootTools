@@ -36,7 +36,3 @@ def read(file, location, data_bytes, integer=True, reverse=False):
         return int.from_bytes(output_data, "big")
 
     return output_data
-
-
-def extract(filename, output_directory):
-    print(filename, output_directory)

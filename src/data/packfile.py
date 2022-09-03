@@ -1,9 +1,9 @@
-# This class stores the information from the header of the packfile
-from helpers import tools
-from tqdm import tqdm
 import mmap
 import os
-import json
+import lz4.frame
+
+from helpers import tools
+from tqdm import tqdm
 
 
 class Packfile:
@@ -13,8 +13,13 @@ class Packfile:
 
         self.packfile_name = packfile_name
 
+        stream.seek(0)
         self.num_files = tools.read(stream, 16, 4, reverse=True)
         self.num_paths = tools.read(stream, 20, 4, reverse=True)
+
+        self.data_size = tools.read(stream, 40, 4, reverse=True)
+        self.compressed_data_size = tools.read(stream, 48, 4, reverse=True)
+
         self.data_offset = tools.read(stream, 64, 4, reverse=True)
 
         self.header_offset = 120
@@ -50,8 +55,6 @@ class Packfile:
             locations.append(location + 1)
             offset = location
 
-        print(dict(zip(locations, names)))
-
         return dict(zip(locations, names))
 
     def extract(self, output_directory, recursive):
@@ -64,62 +67,72 @@ class Packfile:
 
         for file in tqdm(range(0, self.num_files), leave=(not self.subpack)):
             name_offset = int.from_bytes(stream.read(8), "little")
+
             name_offset += self.filenames_offset
             name = mappings[name_offset]
             name = name.decode("ascii")
 
-            print(name)
-            print(hex(stream.tell()))
-            print(hex(name_offset))
-
             path_offset = int.from_bytes(stream.read(8), "little")
-            print(hex(path_offset))
             path_offset += self.filenames_offset
-            print(hex(path_offset))
 
             path = mappings[path_offset]
             path = path.decode("ascii")
-            print(path)
 
-            print(hex(self.data_offset))
             file_data_offset = int.from_bytes(stream.read(8), "little")
-            print(hex(file_data_offset))
             file_data_offset += self.data_offset
-            print(hex(file_data_offset))
 
             size = int.from_bytes(stream.read(8), "little")
+            compressed_size = int.from_bytes(stream.read(8), "little")
             stream.read(16)
 
-            # self.write_file(
-            #     name,
-            #     path,
-            #     size,
-            #     file_data_offset,
-            #     mm,
-            #     output_directory,
-            #     recursive,
-            # )
+            self.write_file(
+                name,
+                path,
+                size,
+                compressed_size,
+                file_data_offset,
+                mm,
+                output_directory,
+                recursive,
+            )
 
-    # def write_file(
-    #     self, name, path, size, offset, mm, output_directory, recursive=True
-    # ):
-    #     path = f"{output_directory}\\{path}"
-    #     if not os.path.exists(path):
-    #         os.makedirs(path)
+    def write_file(
+        self,
+        name,
+        path,
+        size,
+        compressed_size,
+        offset,
+        mm,
+        output_directory,
+        recursive=True,
+    ):
+        path = f"{output_directory}\\{path}"
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-    #     mm.seek(offset)
-    #     output_file = f"{path}\\{name}"
+        mm.seek(offset)
+        output_file = f"{path}\\{name}"
 
-    #     file = mm.read(size)
+        if size != compressed_size:
+            file = mm.read(compressed_size)
+            print(len(file))
+            file = lz4.frame.decompress(bytearray(file))
+            file = bytes(file)
+            print(len(file))
+        else:
+            file = mm.read(size)
 
-    #     with open(output_file, "wb") as f:
-    #         f.write(file)
+        assert len(file) == size
 
-    #     is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
-    #         ".str2_pc"
-    #     )
-    #     if is_packfile and recursive:
-    #         extract_subfile(output_file, self.packfile_name, output_directory)
+        with open(output_file, "wb") as f:
+            f.write(file)
+
+        is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
+            ".str2_pc"
+        )
+        if is_packfile and recursive:
+            extract_subfile(output_file, self.packfile_name, output_directory)
 
 
 def extract_subfile(filename, root_packfile, output_directory):
