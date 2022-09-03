@@ -3,6 +3,7 @@ from helpers import tools
 from tqdm import tqdm
 import mmap
 import os
+import json
 
 
 class Packfile:
@@ -49,9 +50,11 @@ class Packfile:
             locations.append(location + 1)
             offset = location
 
+        print(dict(zip(locations, names)))
+
         return dict(zip(locations, names))
 
-    def extract(self, output_directory):
+    def extract(self, output_directory, recursive):
         stream = self.stream
         mappings = self.filename_mappings(stream)
 
@@ -65,35 +68,58 @@ class Packfile:
             name = mappings[name_offset]
             name = name.decode("ascii")
 
+            print(name)
+            print(hex(stream.tell()))
+            print(hex(name_offset))
+
             path_offset = int.from_bytes(stream.read(8), "little")
+            print(hex(path_offset))
             path_offset += self.filenames_offset
+            print(hex(path_offset))
 
             path = mappings[path_offset]
             path = path.decode("ascii")
+            print(path)
 
+            print(hex(self.data_offset))
             file_data_offset = int.from_bytes(stream.read(8), "little")
+            print(hex(file_data_offset))
             file_data_offset += self.data_offset
+            print(hex(file_data_offset))
 
             size = int.from_bytes(stream.read(8), "little")
             stream.read(16)
 
-            self.write_file(name, path, size, file_data_offset, mm, output_directory)
+            # self.write_file(
+            #     name,
+            #     path,
+            #     size,
+            #     file_data_offset,
+            #     mm,
+            #     output_directory,
+            #     recursive,
+            # )
 
-    def write_file(self, name, path, size, offset, mm, output_directory):
-        path = f"{output_directory}\\{path}"
-        if not os.path.exists(path):
-            os.makedirs(path)
+    # def write_file(
+    #     self, name, path, size, offset, mm, output_directory, recursive=True
+    # ):
+    #     path = f"{output_directory}\\{path}"
+    #     if not os.path.exists(path):
+    #         os.makedirs(path)
 
-        mm.seek(offset)
-        output_file = f"{path}\\{name}"
+    #     mm.seek(offset)
+    #     output_file = f"{path}\\{name}"
 
-        file = mm.read(size)
+    #     file = mm.read(size)
 
-        with open(output_file, "wb") as f:
-            f.write(file)
+    #     with open(output_file, "wb") as f:
+    #         f.write(file)
 
-        if output_file.endswith(".vpp_pc") or output_file.endswith(".str2_pc"):
-            extract_subfile(output_file, self.packfile_name, output_directory)
+    #     is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
+    #         ".str2_pc"
+    #     )
+    #     if is_packfile and recursive:
+    #         extract_subfile(output_file, self.packfile_name, output_directory)
 
 
 def extract_subfile(filename, root_packfile, output_directory):

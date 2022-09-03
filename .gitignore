@@ -5,3 +5,4 @@ __pycache__/
 build/*
 dist/*
 gui.spec
+*.pytest_cache

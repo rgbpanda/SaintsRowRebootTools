@@ -1,1 +1,2 @@
 pyinstaller>=5.3
+tex2img==0.9.1
