@@ -51,7 +51,7 @@ class Packfile:
 
         return dict(zip(locations, names))
 
-    def extract(self):
+    def extract(self, output_directory):
         stream = self.stream
         mappings = self.filename_mappings(stream)
 
@@ -77,10 +77,10 @@ class Packfile:
             size = int.from_bytes(stream.read(8), "little")
             stream.read(16)
 
-            self.write_file(name, path, size, file_data_offset, mm)
+            self.write_file(name, path, size, file_data_offset, mm, output_directory)
 
-    def write_file(self, name, path, size, offset, mm):
-        path = f".\\extracted\\{path}"
+    def write_file(self, name, path, size, offset, mm, output_directory):
+        path = f"{output_directory}\\{path}"
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -93,11 +93,11 @@ class Packfile:
             f.write(file)
 
         if output_file.endswith(".vpp_pc") or output_file.endswith(".str2_pc"):
-            extract_subfile(output_file, self.packfile_name)
+            extract_subfile(output_file, self.packfile_name, output_directory)
 
 
-def extract_subfile(filename, root_packfile):
+def extract_subfile(filename, root_packfile, output_directory):
     with open(filename, "rb") as f:
         packfile = Packfile(f, root_packfile, subpack=True)
-        packfile.extract()
+        packfile.extract(output_directory)
     os.remove(filename)
