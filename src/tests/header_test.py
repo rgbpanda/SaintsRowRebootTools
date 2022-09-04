@@ -4,7 +4,7 @@ from data.packfile import Packfile
 
 
 def test_vpp_pc_header_values():
-    with open("tests/test_header.vpp_pc", "rb") as vpp:
+    with open("tests/files/test_header.vpp_pc", "rb") as vpp:
         packfile = Packfile(vpp, "test", False)
         assert packfile.num_files == 149383
         assert packfile.num_paths == 290
@@ -15,7 +15,7 @@ def test_vpp_pc_header_values():
 
 
 def test_str2_header_values():
-    with open("tests/test_header.str2_pc", "rb") as vpp:
+    with open("tests/files/test_header.str2_pc", "rb") as vpp:
         packfile = Packfile(vpp, "test", False)
         assert packfile.num_files == 4495
         assert packfile.num_paths == 112
