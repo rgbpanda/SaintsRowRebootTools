@@ -29,7 +29,6 @@ def extract_all():
         "Extract Files?",
         "Are you sure you would like to extract all files from the selected directory? (This may take a while)",
     ):
-        print(recursive_enabled.get())
         srrutil.extract_directory(
             input_directory, output_directory, recursive_enabled.get()
         )

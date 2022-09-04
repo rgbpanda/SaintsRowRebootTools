@@ -14,7 +14,6 @@ def extract_directory(input_directory, output_directory, recursive):
 
 
 def extract_file(filename, filepath, output_directory, recursive):
-    print(filepath)
     with open(filepath, "rb") as file:
         packfile = Packfile(file, filename)
         packfile.extract(output_directory, recursive)

@@ -64,7 +64,11 @@ class Packfile:
         mm = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
         stream.seek(self.header_offset, 0)
 
-        for file in tqdm(range(0, self.num_files), leave=(not self.subpack)):
+        t = tqdm(
+            range(0, self.num_files),
+            leave=(not self.subpack),
+        )
+        for file in t:
             name_offset = int.from_bytes(stream.read(8), "little")
             name_offset += self.filenames_offset
             name = mappings[name_offset]
@@ -83,6 +87,7 @@ class Packfile:
             compressed_size = int.from_bytes(stream.read(8), "little")
             stream.read(8)
 
+            t.set_description(f"Extracting: {self.packfile_name}", refresh=True)
             self.write_file(
                 name,
                 path,
