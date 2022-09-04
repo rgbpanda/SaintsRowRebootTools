@@ -20,5 +20,6 @@ def extract_file(filename, filepath, output_directory, recursive):
         packfile.extract(output_directory, recursive)
 
 
-if len(sys.argv) == 2:
-    extract_file(sys.argv[1], sys.argv[1], "output", False)
+if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        extract_file(sys.argv[1], sys.argv[1], "output", False)

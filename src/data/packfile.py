@@ -62,12 +62,10 @@ class Packfile:
         mappings = self.filename_mappings(stream)
 
         mm = mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ)
-
         stream.seek(self.header_offset, 0)
 
         for file in tqdm(range(0, self.num_files), leave=(not self.subpack)):
             name_offset = int.from_bytes(stream.read(8), "little")
-
             name_offset += self.filenames_offset
             name = mappings[name_offset]
             name = name.decode("ascii")
@@ -83,7 +81,7 @@ class Packfile:
 
             size = int.from_bytes(stream.read(8), "little")
             compressed_size = int.from_bytes(stream.read(8), "little")
-            stream.read(16)
+            stream.read(8)
 
             self.write_file(
                 name,
@@ -114,16 +112,12 @@ class Packfile:
         mm.seek(offset)
         output_file = f"{path}\\{name}"
 
-        if size != compressed_size:
+        if compressed_size != int("0xffffffffffffffff", 16):
             file = mm.read(compressed_size)
-            print(len(file))
             file = lz4.frame.decompress(bytearray(file))
             file = bytes(file)
-            print(len(file))
         else:
             file = mm.read(size)
-
-        assert len(file) == size
 
         with open(output_file, "wb") as f:
             f.write(file)
