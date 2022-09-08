@@ -3,6 +3,7 @@ import sys
 
 from data.packfile import Packfile
 
+# def patch()
 
 def extract_directory(input_directory, output_directory, recursive):
     for path, dirs, files in os.walk(input_directory):
@@ -20,5 +21,12 @@ def extract_file(filename, filepath, output_directory, recursive):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        extract_file(sys.argv[1], sys.argv[1], "output", False)
+    if len(sys.argv) == 4:
+        if sys.argv[1] == "patch":
+            file = sys.argv[2].replace(".\\", "")
+            new = sys.argv[3].replace(".\\", "")
+            with open(file, "rb") as ogfile:
+                packfile = Packfile(ogfile, file)
+                packfile.patch(new, ogfile)
+        elif sys.argv[1] == "extract":
+            extract_file(sys.argv[2], sys.argv[2], "output", False)
