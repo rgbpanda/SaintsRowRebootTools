@@ -1,4 +1,7 @@
 
+from helpers import tools
+
+
 # Atrributes:
 #
 # parent    - the packfile which contains this file
@@ -16,10 +19,12 @@
 # flags_l  - location of flags
 #
 # name   - name of file
+# type   - extension of file
 # path   - path of file
 # size   - size of file
 # csize  - compressed size of file
 # flags  - file flags
+#
 class File:
     def __init__(self, parent, start):
         self.parent = parent
@@ -45,11 +50,12 @@ class File:
         self.flags_l = stream.tell()
         self.flags = int.from_bytes(parent.stream.read(8), "little")
 
+        stream.seek(parent.HEADER_O + parent.names_o + self.name_o)
+        self.name = tools.read_string(stream, b'\x00')
 
+        stream.seek(parent.HEADER_O + parent.names_o + self.path_o)
+        self.path = tools.read_string(stream, b'\x00')
 
-        # path = self.path_offset + self.filenames_offset
-        # self.path = path.decode("ascii")
-        # self.name = name.decode("ascii")
 
 
 

@@ -12,6 +12,7 @@ from data import file
 # Atrributes:
 #
 # name       - the packfile name
+# path       - location of packfile on disk (None if subpack?)
 # subpack    - whether pack is inside another pack
 #
 # data_o    - value of data offset
@@ -23,28 +24,32 @@ from data import file
 # csize     - compressed size of file
 #
 class Packfile:
+    NAMES_OL = 24
+    DATA_OL = 64
+
     NUM_FILES_O = 16
     NUM_PATHS_O  = 20
-    FILENAMES_O = 24
     SIZE_O = 40
     CSIZE_O = 48
-    DATA_START_O = 64
     HEADER_O = 120
 
-    def __init__(self, stream, packfile_name, subpack=False):
-        self.name = packfile_name
-        self.stream = stream
+    def __init__(self, packfile_path, subpack=False):
+        self.stream = open(packfile_path, 'rb')
+
+        self.name = os.path.basename(os.path.normpath(packfile_path))
+        self.path = os.path.normpath(os.path.join(packfile_path, "..\\"))
 
         self.subpack = subpack
         self.validate()
 
+        stream = self.stream
         self.num_files = tools.read(stream, Packfile.NUM_FILES_O, 4, reverse=True)
         self.num_paths = tools.read(stream, Packfile.NUM_PATHS_O, 4, reverse=True)
         self.size = tools.read(stream, Packfile.SIZE_O, 4, reverse=True)
         self.csize = tools.read(stream, Packfile.CSIZE_O, 4, reverse=True)
 
-        self.data_o = tools.read(stream, Packfile.DATA_START_O, 4, reverse=True)
-        self.names_o = tools.read(stream, Packfile.FILENAMES_O, 4, reverse=True)
+        self.data_o = tools.read(stream, Packfile.DATA_OL, 4, reverse=True)
+        self.names_o = tools.read(stream, Packfile.NAMES_OL, 4, reverse=True)
 
         self.files = []
         for f in range(0, self.num_files):
@@ -175,6 +180,8 @@ class Packfile:
         if is_packfile and recursive:
             extract_subfile(output_file, self.packfile_name, output_directory)
 
+    def close(self):
+        self.stream.close()
 
 def extract_subfile(filename, root_packfile, output_directory):
     with open(filename, "rb") as f:
