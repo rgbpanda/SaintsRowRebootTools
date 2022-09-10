@@ -36,3 +36,23 @@ def read(file, location, data_bytes, integer=True, reverse=False):
         return int.from_bytes(output_data, "big")
 
     return output_data
+
+
+def filename_mappings(packfile):
+    filenames_bytes = packfile.data_offset - packfile.filenames_offset
+    packfile.stream.seek(0)
+    data = read(packfile.stream, packfile.filenames_offset, filenames_bytes, integer=False)
+
+    names = data.split(b"\x00")
+    del names[(packfile.num_files + packfile.num_paths) :]
+
+    locations = []
+    locations.append(packfile.filenames_offset)
+    offset = packfile.filenames_offset
+    mm = mmap.mmap(packfile.stream.fileno(), 0, access=mmap.ACCESS_READ)
+    while len(locations) < packfile.num_files + packfile.num_paths:
+        location = mm.find(b"\x00", offset + 1)
+        locations.append(location + 1)
+        offset = location
+
+    return dict(zip(locations, names))

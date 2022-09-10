@@ -19,7 +19,7 @@ def extract_directory(input_directory, output_directory, recursive):
 def extract_file(filename, filepath, output_directory, recursive):
     with open(filepath, "rb") as file:
         packfile = Packfile(file, filename)
-        packfile.extract(output_directory, recursive)
+        # packfile.extract(output_directory, recursive)
 
 
 def patch(gamepath):
@@ -46,7 +46,7 @@ def patch(gamepath):
                     parent_path = f"{base_paths[parent]}\\{parent}"
                     with open(parent_path, "rb") as parent_file:
                         packfile = Packfile(parent_file, parent)
-                        packfile.patch(f"{gamepath}\\mod_data\\{name}", parent_file, parent_path)
+                        packfile.patch(f"{gamepath}\\mod_data\\{name}", parent_file, parent_path, json_path)
                 else:
                     pass
                     #     extract file from parent
