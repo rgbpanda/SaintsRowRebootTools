@@ -96,7 +96,7 @@ recursive_box = ttk.Checkbutton(
     offvalue=0,
 )
 recursive_box.state(["!alternate"])
-recursive_box.state(["selected"])
+recursive_box.state(["!selected"])
 
 content.grid(column=0, row=0)
 input_box.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))

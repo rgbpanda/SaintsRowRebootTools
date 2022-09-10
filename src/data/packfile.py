@@ -137,5 +137,5 @@ class Packfile:
 def extract_subfile(filename, root_packfile, output_directory):
     with open(filename, "rb") as f:
         packfile = Packfile(f, root_packfile, subpack=True)
-        packfile.extract(output_directory)
+        packfile.extract(output_directory, recursive=True)
     os.remove(filename)
