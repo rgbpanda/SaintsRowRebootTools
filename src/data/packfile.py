@@ -2,6 +2,7 @@ import mmap
 import os
 import lz4.frame
 
+from lz4.frame import BLOCKSIZE_MAX256KB, LZ4FrameCompressor
 from helpers import tools
 from tqdm import tqdm
 
@@ -56,6 +57,86 @@ class Packfile:
             offset = location
 
         return dict(zip(locations, names))
+
+
+    def patch(self, new, stream):
+        with open(new, 'rb') as new:
+            new_data = new.read()
+
+        mappings = self.filename_mappings(stream)
+        stream.seek(self.header_offset, 0)
+
+        for file in range(0, self.num_files):
+            name_offset = int.from_bytes(stream.read(8), "little")
+            name_offset += self.filenames_offset
+
+            name = mappings[name_offset]
+            name = name.decode("ascii")
+
+            next = stream.read(8)
+            update_from_here = stream.tell()
+            if update_from_here < 0:
+                update_from_here = update_from_here + 8196
+
+            path_offset = int.from_bytes(next, "little")
+            path_offset += self.filenames_offset
+
+            path = mappings[path_offset]
+            path = path.decode("ascii")
+            
+            print(name)
+            file_data_offset = int.from_bytes(stream.read(8), "little")
+
+            file_data_offset2 = file_data_offset + self.data_offset
+
+    
+            size = int.from_bytes(stream.read(8), "little")
+            compressed_size = int.from_bytes(stream.read(8), "little")
+            stream.read(8)
+    
+            if compressed_size != int("0xffffffffffffffff", 16):
+                compressor = LZ4FrameCompressor(block_size=BLOCKSIZE_MAX256KB, compression_level=9, auto_flush=True)
+                header = compressor.begin()
+                data = compressor.compress(new_data)
+                trail = b"\x00" * 4
+                data = b"".join([header, data, trail])
+                compressed_size = len(data)
+            else:
+                data = new_data
+
+            filename = new.name.replace("patch_dir\\", "")
+            print(filename)
+            print(f"file stated location: {hex(file_data_offset)}")
+            if name == filename:
+                print(f"Patching {name}")
+                stream.seek(0, io.SEEK_END)
+                new_location = stream.tell()
+                if new_location < 0:
+                    new_location = new_location + 8196
+                # print(update_from_here)
+                # print(new_location)
+                new_location_bytes = int.to_bytes(new_location - self.data_offset, 8, 'little')
+                new_size = int.to_bytes(len(new_data), 8, 'little')
+                flag = int.to_bytes(256, 4, 'big')
+                print(f"{hex(self.data_offset)}")
+                print(f"file stated location: {hex(file_data_offset)}")
+                print(f"actual location: {hex(file_data_offset2)}")
+                break
+
+                # with open(self.packfile_name, 'r+b') as file:
+                #     print(f"Patching {self.packfile_name}")
+                #     print("Writing header data")
+                #     file.seek(update_from_here)
+                #     file.write(new_location_bytes)
+                #     file.write(new_size)
+                #     file.write(int.to_bytes(compressed_size, 8, 'little'))
+                #     file.write(flag)
+                #     print("Writing new file data")
+                #     file.seek(new_location)
+                #     file.write(data)
+                #     print("done!")
+                break
+
 
     def extract(self, output_directory, recursive):
         stream = self.stream
