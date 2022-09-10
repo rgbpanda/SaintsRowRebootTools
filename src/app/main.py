@@ -9,6 +9,7 @@ from data.packfile import Packfile
 
 
 def extract_directory(input_directory, output_directory, recursive):
+    output_directory = os.path.join(output_directory, "\\sr5")
     for path, dirs, files in os.walk(input_directory):
         for name in files:
             if name.endswith(".vpp_pc") or name.endswith(".str2_pc"):
