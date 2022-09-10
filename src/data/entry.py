@@ -1,5 +1,7 @@
+import os
+import lz4.frame
 
-from helpers import tools
+from app import helpers
 
 
 # Atrributes:
@@ -25,13 +27,13 @@ from helpers import tools
 # csize  - compressed size of file
 # flags  - file flags
 #
-class File:
+class Entry:
     def __init__(self, parent, start):
         self.parent = parent
 
         stream = parent.stream
         stream.seek(start)
-        
+
         self.name_ol = start
         self.name_o = int.from_bytes(stream.read(8), "little")
 
@@ -51,12 +53,36 @@ class File:
         self.flags = int.from_bytes(parent.stream.read(8), "little")
 
         stream.seek(parent.HEADER_O + parent.names_o + self.name_o)
-        self.name = tools.read_string(stream, b'\x00')
+        self.name = helpers.read_string(stream, b'\x00')
 
         stream.seek(parent.HEADER_O + parent.names_o + self.path_o)
-        self.path = tools.read_string(stream, b'\x00')
+        self.path = helpers.read_string(stream, b'\x00')
+
+    def extract(self, output_directory, recursive):
+        path = f"{output_directory}\\{self.path}"
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        stream = self.parent.stream
+        stream.seek(self.parent.data_o + self.data_o)
+        if self.csize != int("0xffffffffffffffff", 16):
+            data = stream.read(self.csize)
+            data = lz4.frame.decompress(data)
+        else:
+            data = stream.read(self.size)
+
+        output_file = f"{path}\\{self.name}"
+        with open(output_file, "wb") as f:
+            f.write(data)
 
 
+        # is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
+        #     ".str2_pc"
+        # )
+        # if is_packfile and recursive:
+        #     extract_subfile(output_file, self.packfile_name, output_directory)
+
+    # def read_data():s
 
 
     #         path = mappings[path_offset]

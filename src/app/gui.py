@@ -1,16 +1,18 @@
 import os
-import srrutil
 
 from tkinter import ttk, messagebox
 from tkinter import StringVar, IntVar
 from tkinter import Tk, END
 from tkinter import filedialog as fd
 
+from app import main
+
+
 root = Tk()
 root.title("SR Reboot Tool")
 root.resizable(False, False)
 tab_control = ttk.Notebook(root)
-  
+
 extract_tab = ttk.Frame(tab_control)
 patch_tab = ttk.Frame(tab_control)
 
@@ -31,11 +33,12 @@ recursive_enabled = IntVar()
 
 
 def apply_patch():
-    srrutil.patch(input_box_value.get())
+    main.patch(input_box_value.get())
 
 
 def remove_patch():
     game_dir = input_box_value.get()
+
 
 def extract_all():
     input_directory = input_box_value.get()
@@ -44,7 +47,7 @@ def extract_all():
         "Extract Files?",
         "Are you sure you would like to extract all files from the selected directory? (This may take a while)",
     ):
-        srrutil.extract_directory(
+        main.extract_directory(
             input_directory, output_directory, recursive_enabled.get()
         )
 
@@ -140,8 +143,8 @@ input_button = ttk.Button(
 )
 input_button.config(width=22)
 
-input_box = ttk.Entry(content2, textvariable=input_box_value)
-input_box.config(width=60)
+input_box_patch = ttk.Entry(content2, textvariable=input_box_value)
+input_box_patch.config(width=60)
 
 
 path = os.path.join(root_dir, "Program Files\\Epic Games\\SaintsRow\\sr5")
@@ -153,7 +156,7 @@ patch_button = ttk.Button(content2, text="Patch", command=apply_patch)
 unpatch_button = ttk.Button(content2, text="Unpatch", command=remove_patch)
 
 content2.grid(column=0, row=0)
-input_box.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
+input_box_patch.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
 input_button.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
 patch_button.grid(column=0, row=2, columnspan=2, ipadx=5, ipady=5, padx=(0, 0), pady=(50, 20))
 unpatch_button.grid(column=2, row=2, columnspan=2, ipadx=5, ipady=5, padx=(0, 20), pady=(50, 20))

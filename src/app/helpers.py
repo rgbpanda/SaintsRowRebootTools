@@ -42,7 +42,7 @@ def read_string(stream, seperator):
     output = b''
     while len(output) == 0 or output[-1:] != seperator:
         output += stream.read(1)
-    return output.decode("ascii")
+    return output[:-1].decode("ascii")
 
 # def filename_mappings(packfile):
 #     filenames_bytes = packfile.data_offset - packfile.filenames_offset

@@ -3,7 +3,8 @@ import sys
 import json
 import gzip
 
-from helpers import tools
+import app.helpers
+
 from data.packfile import Packfile
 
 
@@ -18,7 +19,7 @@ def extract_directory(input_directory, output_directory, recursive):
 
 def extract_file(filename, filepath, output_directory, recursive):
     packfile = Packfile(filepath)
-    # packfile.extract(output_directory, recursive)
+    packfile.extract(output_directory, recursive)
 
 
 def patch(gamepath):
@@ -65,7 +66,7 @@ def patch(gamepath):
 
 
 if __name__ == "__main__":
-    dir = "C:\\Users\\randy\\Desktop\\flavs"
+    dir = "C:\\Users\\randy\\Desktop\\Newfolder"
     extract_directory(dir, f"{dir}\\eee", False)
     # if len(sys.argv) == 2:
     #     extract_file(sys.argv[1], sys.argv[1], "output", False)
