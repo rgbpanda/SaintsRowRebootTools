@@ -6,7 +6,7 @@ from lz4.frame import BLOCKSIZE_MAX256KB, LZ4FrameCompressor
 from helpers import tools
 from tqdm import tqdm
 
-from . import File
+from data import file
 
 
 # Atrributes:
@@ -36,7 +36,7 @@ class Packfile:
         self.stream = stream
 
         self.subpack = subpack
-        self.validate(stream)
+        self.validate()
 
         self.num_files = tools.read(stream, Packfile.NUM_FILES_O, 4, reverse=True)
         self.num_paths = tools.read(stream, Packfile.NUM_PATHS_O, 4, reverse=True)
@@ -47,9 +47,9 @@ class Packfile:
         self.names_o = tools.read(stream, Packfile.FILENAMES_O, 4, reverse=True)
 
         self.files = []
-        for file in range(0, self.num_files):
-            start = (file * 48) + Packfile.HEADER_O
-            self.files.append(File(self, start))
+        for f in range(0, self.num_files):
+            start = (f * 48) + Packfile.HEADER_O
+            self.files.append(file.File(self, start))
 
         stream.close()
 

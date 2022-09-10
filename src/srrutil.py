@@ -66,5 +66,7 @@ def patch(gamepath):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        extract_file(sys.argv[1], sys.argv[1], "output", False)
+    dir = "C:\\Users\\randy\\Desktop\\flavs"
+    extract_directory(dir, f"{dir}\\eee", False)
+    # if len(sys.argv) == 2:
+    #     extract_file(sys.argv[1], sys.argv[1], "output", False)

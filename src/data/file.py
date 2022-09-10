@@ -13,32 +13,43 @@
 # 
 # size_l   - location of size in parent
 # csize_l  - location of compressed size in parent
+# flags_l  - location of flags
 #
 # name   - name of file
 # path   - path of file
 # size   - size of file
 # csize  - compressed size of file
-#
+# flags  - file flags
 class File:
     def __init__(self, parent, start):
-        self.name_ol = start
-
-        parent.stream.seek(name_ol)
-        self.name_o = int.from_bytes(parent.stream.read(8), "little")
-        self.name = name.decode("ascii")
-
-        self.filepath_offset = int.from_bytes(parent.stream.read(8), "little")
-        path = self.path_offset + self.filenames_offset
-        path = mappings[path_offset]
-        self.path = path.decode("ascii")
-        self.data_offset = int.from_bytes(parent.stream.read(8), "little")
-
-        self.size = int.from_bytes(parent.stream.read(8), "little")
-        compressed_size = int.from_bytes(parent.stream.read(8), "little")
-        stream.read(8)
-
         self.parent = parent
 
+        stream = parent.stream
+        stream.seek(start)
+        
+        self.name_ol = start
+        self.name_o = int.from_bytes(stream.read(8), "little")
+
+        self.path_ol = stream.tell()
+        self.path_o = int.from_bytes(stream.read(8), "little")
+
+        self.data_ol = stream.tell()
+        self.data_o = int.from_bytes(parent.stream.read(8), "little")
+
+        self.size_l = stream.tell()
+        self.size = int.from_bytes(parent.stream.read(8), "little")
+
+        self.csize_l = stream.tell()
+        self.csize = int.from_bytes(parent.stream.read(8), "little")
+
+        self.flags_l = stream.tell()
+        self.flags = int.from_bytes(parent.stream.read(8), "little")
+
+
+
+        # path = self.path_offset + self.filenames_offset
+        # self.path = path.decode("ascii")
+        # self.name = name.decode("ascii")
 
 
 
