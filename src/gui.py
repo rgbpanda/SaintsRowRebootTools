@@ -35,8 +35,7 @@ def apply_patch():
 
 
 def remove_patch():
-    print(input_box_value.get())
-
+    game_dir = input_box_value.get()
 
 def extract_all():
     input_directory = input_box_value.get()

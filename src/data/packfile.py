@@ -1,7 +1,7 @@
 import mmap
 import os
 import lz4.frame
-
+import io
 from lz4.frame import BLOCKSIZE_MAX256KB, LZ4FrameCompressor
 from helpers import tools
 from tqdm import tqdm
@@ -58,8 +58,7 @@ class Packfile:
 
         return dict(zip(locations, names))
 
-
-    def patch(self, new, stream):
+    def patch(self, new, stream, patch_path):
         with open(new, 'rb') as new:
             new_data = new.read()
 
@@ -84,12 +83,11 @@ class Packfile:
             path = mappings[path_offset]
             path = path.decode("ascii")
             
-            print(name)
             file_data_offset = int.from_bytes(stream.read(8), "little")
 
             file_data_offset2 = file_data_offset + self.data_offset
 
-    
+
             size = int.from_bytes(stream.read(8), "little")
             compressed_size = int.from_bytes(stream.read(8), "little")
             stream.read(8)
@@ -104,37 +102,30 @@ class Packfile:
             else:
                 data = new_data
 
-            filename = new.name.replace("patch_dir\\", "")
-            print(filename)
-            print(f"file stated location: {hex(file_data_offset)}")
+            filename = os.path.basename(os.path.normpath(new.name))
             if name == filename:
                 print(f"Patching {name}")
                 stream.seek(0, io.SEEK_END)
                 new_location = stream.tell()
                 if new_location < 0:
                     new_location = new_location + 8196
-                # print(update_from_here)
-                # print(new_location)
+
                 new_location_bytes = int.to_bytes(new_location - self.data_offset, 8, 'little')
                 new_size = int.to_bytes(len(new_data), 8, 'little')
                 flag = int.to_bytes(256, 4, 'big')
-                print(f"{hex(self.data_offset)}")
-                print(f"file stated location: {hex(file_data_offset)}")
-                print(f"actual location: {hex(file_data_offset2)}")
-                break
 
-                # with open(self.packfile_name, 'r+b') as file:
-                #     print(f"Patching {self.packfile_name}")
-                #     print("Writing header data")
-                #     file.seek(update_from_here)
-                #     file.write(new_location_bytes)
-                #     file.write(new_size)
-                #     file.write(int.to_bytes(compressed_size, 8, 'little'))
-                #     file.write(flag)
-                #     print("Writing new file data")
-                #     file.seek(new_location)
-                #     file.write(data)
-                #     print("done!")
+                with open(patch_path, 'r+b') as file:
+                    print(f"Patching {self.packfile_name}")
+                    print("Writing header data")
+                    file.seek(update_from_here)
+                    file.write(new_location_bytes)
+                    file.write(new_size)
+                    file.write(int.to_bytes(compressed_size, 8, 'little'))
+                    file.write(flag)
+                    print("Writing new file data")
+                    file.seek(new_location)
+                    file.write(data)
+                    print("done!")
                 break
 
 
