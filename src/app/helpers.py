@@ -1,4 +1,7 @@
 import mmap
+import io
+
+from data.packfile import Packfile
 
 
 def reverse(input_bytes):
@@ -44,21 +47,10 @@ def read_string(stream, seperator):
         output += stream.read(1)
     return output[:-1].decode("ascii")
 
-# def filename_mappings(packfile):
-#     filenames_bytes = packfile.data_offset - packfile.filenames_offset
-#     packfile.stream.seek(0)
-#     data = read(packfile.stream, packfile.filenames_offset, filenames_bytes, integer=False)
 
-#     names = data.split(b"\x00")
-#     del names[(packfile.num_files + packfile.num_paths) :]
+def extract_subpack(data, output_directory, name):
+    subpack_stream = io.BytesIO(data)
+    packfile = Packfile(subpack_stream=subpack_stream, subpack_name=name)
+    packfile.extract(output_directory, recursive=True)
 
-#     locations = []
-#     locations.append(packfile.filenames_offset)
-#     offset = packfile.filenames_offset
-#     mm = mmap.mmap(packfile.stream.fileno(), 0, access=mmap.ACCESS_READ)
-#     while len(locations) < packfile.num_files + packfile.num_paths:
-#         location = mm.find(b"\x00", offset + 1)
-#         locations.append(location + 1)
-#         offset = location
 
-#     return dict(zip(locations, names))

@@ -7,15 +7,15 @@ from lz4.frame import BLOCKSIZE_MAX256KB, LZ4FrameCompressor
 from tqdm import tqdm
 
 from app import helpers
-from data import entry
+from data.entry import Entry
 
 
 # Atrributes:
 #
 # name       - the packfile name
-# path       - location of packfile on disk (None if subpack?)
-# subpack    - whether pack is inside another pack
-#
+# path       - location of packfile on disk
+# subpack    - whether or not is subpack
+# 
 # data_o    - value of data offset
 # names_o   - value of the filenames offset
 #
@@ -35,13 +35,18 @@ class Packfile:
     CSIZE_O = 48
     HEADER_O = 120
 
-    def __init__(self, packfile_path, subpack=False):
-        self.stream = open(packfile_path, 'rb')
+    # needs either packfile_path
+    # or subpack_stream and subpack_name
+    def __init__(self, packfile_path=None, subpack_stream=None, subpack_name=None):
+        self.subpack = subpack_stream is not None
+        if self.subpack:
+            self.stream = subpack_stream
+            self.name = subpack_name
+        else:
+            self.stream = open(packfile_path, 'rb')
+            self.name = os.path.basename(os.path.normpath(packfile_path))
+            self.path = os.path.normpath(os.path.join(packfile_path, "..\\"))
 
-        self.name = os.path.basename(os.path.normpath(packfile_path))
-        self.path = os.path.normpath(os.path.join(packfile_path, "..\\"))
-
-        self.subpack = subpack
         self.validate()
 
         stream = self.stream
@@ -56,7 +61,7 @@ class Packfile:
         self.entries = []
         for f in range(0, self.num_files):
             start = (f * 48) + Packfile.HEADER_O
-            self.entries.append(entry.Entry(self, start))
+            self.entries.append(Entry(self, start))
 
     def validate(self):
         descriptor = helpers.read(self.stream, 0, 4)
@@ -70,8 +75,10 @@ class Packfile:
             quit()
 
     def extract(self, output_directory, recursive):
-        for file_entry in tqdm(self.entries):
+        entries_bar = tqdm(self.entries, leave=(not self.subpack))
+        for file_entry in entries_bar:
             file_entry.extract(output_directory, recursive)
+            entries_bar.set_description(f"Extracting: {self.name}", refresh=True)
 
 
     # def patch(self, new, patch_path, json_path):
@@ -180,8 +187,3 @@ class Packfile:
     # def close(self):
     #     self.stream.close()
 
-# def extract_subfile(filename, root_packfile, output_directory):
-#     with open(filename, "rb") as f:
-#         packfile = Packfile(f, root_packfile, subpack=True)
-#         packfile.extract(output_directory, recursive=True)
-#     os.remove(filename)

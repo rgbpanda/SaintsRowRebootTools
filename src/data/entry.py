@@ -1,8 +1,8 @@
+import io
 import os
 import lz4.frame
 
 from app import helpers
-
 
 # Atrributes:
 #
@@ -54,6 +54,7 @@ class Entry:
 
         stream.seek(parent.HEADER_O + parent.names_o + self.name_o)
         self.name = helpers.read_string(stream, b'\x00')
+        self.type = self.name.split(".")[-1]
 
         stream.seek(parent.HEADER_O + parent.names_o + self.path_o)
         self.path = helpers.read_string(stream, b'\x00')
@@ -71,16 +72,21 @@ class Entry:
         else:
             data = stream.read(self.size)
 
-        output_file = f"{path}\\{self.name}"
-        with open(output_file, "wb") as f:
-            f.write(data)
+        packfile_types = ["vpp_pc", "str2_pc"]
+        if (self.type in packfile_types) and recursive:
+            helpers.extract_subpack(data, output_directory, self.name)
+        else:
+            output_file = f"{path}\\{self.name}"
+            with open(output_file, "wb") as f:
+                f.write(data)
+
 
 
         # is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
         #     ".str2_pc"
         # )
         # if is_packfile and recursive:
-        #     extract_subfile(output_file, self.packfile_name, output_directory)
+        #     
 
     # def read_data():s
 

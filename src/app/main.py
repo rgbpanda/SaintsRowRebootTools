@@ -67,6 +67,6 @@ def patch(gamepath):
 
 if __name__ == "__main__":
     dir = "C:\\Users\\randy\\Desktop\\Newfolder"
-    extract_directory(dir, f"{dir}\\eee", False)
+    extract_directory(dir, f"{dir}\\eee", True)
     # if len(sys.argv) == 2:
     #     extract_file(sys.argv[1], sys.argv[1], "output", False)
