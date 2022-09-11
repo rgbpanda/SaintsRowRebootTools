@@ -1,13 +1,22 @@
 # Saints Row Reboot Tools
 
-Currently contains unpacking tool. More details/updates to come in the future
+Currently contains unpacking tool and experimental patch tool
 
-## Recursive File Extracter
+## Extract
 Input directory - Directory that contains desired `vpp_pc` and `str2_pc` files to extract
 
 Output directory - Directory to extract the files too
 
 Recursive - Whether to unpack the vcc_pc files and str2_pc files inside the files you are extracting
+
+## Patch (Experimental)
+Game directory - Directory that ends in `sr5`
+
+Patch - will patch game files with data in `mod_data`, and update patched file information in `mod_config`
+
+Open Mod Foler - will open `mod_data` in sr5 and create it if it doesn't exist
+
+Unpatch - will read data in `mod_config` and remove applied patches
 
 # Build
 To Build exe for Windows:
