@@ -14,7 +14,7 @@ Game directory - Directory that ends in `sr5`
 
 Patch - will patch game files with data in `mod_data`, and update patched file information in `mod_config`
 
-Open Mod Foler - will open `mod_data` in sr5 and create it if it doesn't exist
+Open Mod Folder - will open `mod_data` in sr5 and create it if it doesn't exist
 
 Unpatch - will read data in `mod_config` and remove applied patches
 
