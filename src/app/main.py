@@ -21,14 +21,6 @@ def extract(input_directory, output_directory, recursive):
     print("Done! You can close this window now")
 
 
-def get_base_paths(gamepath):
-    base_paths = {}
-    for path, dirs, files in os.walk(f"{gamepath}\\data"):
-        for name in files:
-            base_paths[name] = path
-    return base_paths
-
-
 def mod_data_exists(gamepath):
     mod_data_dir = f"{gamepath}\\mod_data"
     if not os.path.exists(mod_data_dir):
@@ -92,10 +84,17 @@ def validate_patch_files(gamepath):
         patch = f"{gamepath}\\mod_config\\patch.json"
         with open(patch, "r") as patch_file:
             json.loads(patch_file.read())
-    except Exception as e:
-        print(e)
+    except Exception:
         with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
             f.write(json.dumps({}))
+
+
+def get_base_paths(gamepath):
+    base_paths = {}
+    for path, dirs, files in os.walk(f"{gamepath}\\data"):
+        for name in files:
+            base_paths[name] = path
+    return base_paths
 
 
 def patch(gamepath):
@@ -104,35 +103,32 @@ def patch(gamepath):
     with open(f"{gamepath}\\mod_config\\parent_locations.json", "r") as f:
         parent_dict = json.loads(f.read())
 
+    with open(f"{gamepath}\\mod_config\\patch.json", "r") as r:
+        patch_json = json.loads(r.read())
+
     base_paths = get_base_paths(gamepath)
+
+    to_patch = {}
+    print("Finding data to patch")
     for path, dirs, files in os.walk(f"{gamepath}\\mod_data"):
-        for name in files:
-            parents = parent_dict[name]
-            for parent in parents:
-                if parent in base_paths.keys():
-                    parent_path = f"{base_paths[parent]}\\{parent}"
-                    packfile = Packfile(parent_path)
+        for file in files:
+            if file not in parent_dict:
+                print("Invalid file name")
+                print(f"Cannot patch {path}\\{file}")
+                print("Cancelling")
+                return
+            for parent in parent_dict[file]:
+                if parent not in to_patch.keys():
+                    to_patch[parent] = []
+                to_patch[parent].append(f"{path}\\{file}")
 
-                    with open(f"{gamepath}\\mod_config\\patch.json", "r") as r:
-                        patch_json = json.loads(r.read())
-                    output = packfile.patch(f"{path}\\{name}", patch_json)
-
-                    with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
-                        patch_json = json.dumps(output, indent=4)
-                        f.write(patch_json)
-                else:
-                    pass
-                    #     extract file from parent
-                # packfile = Packfile(file, filename)
-                # packfile.extract(output_directory, recursive)
-            # if name.endswith(".vpp_pc") or name.endswith(".str2_pc"):
-            #     filepath = os.path.join(path, name)
-            #     # (name, filepath, output_directory, recursive)   
-
-    # with open(f"{gamepath}\\mod_config\\parents2.json", "r+b") as f2:
-    #     f2.write(string)
-        # string = tools.compressFileToString(f.read())
-        # file = json.loads(f.read())
+    for file in base_paths:
+        if file in to_patch:
+            packfile = Packfile(f"{base_paths[file]}\\{file}")
+            patch_json = packfile.patch(patch_json, to_patch[file])
+    
+    with open(f"{gamepath}\\mod_config\\patch.json", "w") as r:
+        patch_json = r.write(json.dumps(patch_json, indent=4))
 
 
 def unpatch(gamepath):

@@ -41,8 +41,9 @@ def apply_patch():
 
     if main.is_patched(gamepath):
         if messagebox.askyesno(
-            "Overwrite Patch?",
-            "Your game data is already patched, would you like to repatch? (Will unpatch any files not still in mod_data directory)",
+            "Apply Patch?",
+            "Your game data is already patched. Would you like to \
+            overwrite your existing patches with files in mod_data?",
         ):
             main.patch(input_box_patch_value.get())
             update_patched_label()
@@ -64,7 +65,7 @@ def remove_patch():
         return
 
     if messagebox.askyesno(
-            "Remove Patch?",
+            "Remove All Patches?",
             "This returns the game to it's original state"):
         main.unpatch(gamepath)
         update_patched_label()
@@ -124,7 +125,7 @@ def select_input_dir():
         input_box.delete(0, END)
         input_box.insert(0, directory)
 
-        directory = os.path.normpath(os.path.join(directory, "./extracted"))
+        directory = os.path.normpath(os.path.join(directory, "../", "extracted_data"))
         output_box.delete(0, END)
         output_box.insert(0, directory)
 
@@ -160,7 +161,7 @@ if os.path.exists(path):
     input_box.delete(0, END)
     input_box.insert(0, path)
 
-    output_path = os.path.normpath(os.path.join(path, "extracted"))
+    output_path = os.path.normpath(os.path.join(path, "../", "extracted_data"))
     output_box.delete(0, END)
     output_box.insert(0, output_path)
 
