@@ -32,13 +32,37 @@ output_box_value = StringVar()
 recursive_enabled = IntVar()
 label_value = StringVar()
 
+
 def apply_patch():
-    main.patch(input_box_patch_value.get())
-    update_patched_label()
+    gamepath = input_box_patch_value.get()
+    if not main.mod_data_exists(gamepath):
+        messagebox.showerror("Error", "No files in mod_data folder to patch")
+        return
+
+    if main.is_patched(gamepath):
+        if messagebox.askyesno(
+            "Overwrite Patch?",
+            "Your game data is already patched, would you like to repatch? (Will unpatch any files not still in mod_data directory)",
+        ):
+            main.patch(input_box_patch_value.get())
+            update_patched_label()
+        return
+    else:
+        if messagebox.askyesno(
+            "Apply Patch?",
+            "Patch game files with file in mod_data directory?",
+        ):
+            main.patch(input_box_patch_value.get())
+            update_patched_label()
+        return
 
 
 def remove_patch():
-    main.unpatch(input_box_patch_value.get())
+    gamepath = input_box_patch_value.get()
+    if (main.is_patched(gamepath) is False):
+        messagebox.showerror("Error", "No patch is applied")
+        return
+    main.unpatch()
     update_patched_label()
 
 

@@ -122,21 +122,46 @@ class Packfile:
 
         with open(self.packfile_path, 'r+b') as pf:
             print(f"Patching {self.name}")
-            print("Writing header data")
             pf.seek(file.data_ol)
-            print(file.name)
-            print(hex(file.data_ol))
+
+            print(f"Writing data offset: {hex(self.end - self.data_o)}")
             pf.write(int.to_bytes(self.end - self.data_o, 8, 'little'))
+
+            print(f"Writing size: {hex(size)}")
             pf.write(int.to_bytes(size, 8, 'little'))
+
+            print(f"Writing compressed size: {hex(csize)}")
             pf.write(int.to_bytes(csize, 8, 'little'))
 
             print("Writing new file data")
             pf.seek(self.end)
             pf.write(data)
-            print("done!")
+
+            print("Done!")
         return patch
 
     def unpatch(self, patch_entry):
+        patchfile_name = patch_entry["name"]
+        file = self.entries_dict[patchfile_name]
+
+        with open(self.packfile_path, 'r+b') as pf:
+            print(f"Patching {self.name}")
+            pf.seek(file.data_ol)
+
+            print(f"Writing data offset: {hex(self.end - self.data_o)}")
+            pf.write(int.to_bytes(self.end - self.data_o, 8, 'little'))
+
+            print(f"Writing size: {hex(size)}")
+            pf.write(int.to_bytes(size, 8, 'little'))
+
+            print(f"Writing compressed size: {hex(csize)}")
+            pf.write(int.to_bytes(csize, 8, 'little'))
+
+            print("Writing new file data")
+            pf.seek(self.end)
+            pf.write(data)
+
+            print("Done!")
         print(self.end)
         print(patch_entry)
 

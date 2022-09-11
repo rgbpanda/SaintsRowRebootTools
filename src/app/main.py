@@ -29,6 +29,16 @@ def get_base_paths(gamepath):
     return base_paths
 
 
+def mod_data_exists(gamepath):
+    mod_data_dir = f"{gamepath}\\mod_data"
+    if not os.path.exists(mod_data_dir):
+        return False
+
+    if os.listdir(mod_data_dir) == 0:
+        return False
+    return True
+
+
 def is_patched(gamepath):
     if os.path.basename(gamepath) != "sr5":
         print("Invalid game path location")
@@ -38,9 +48,11 @@ def is_patched(gamepath):
         return False
 
     with open(f"{gamepath}\\mod_config\\patch.json", "r") as patch_json:
-        patch_dict = json.loads(patch_json.read())
-        if patch_dict != {}:
+        patch_dict = patch_json.read()
+        if patch_dict != "{}":
             return True
+        else:
+            return False
 
     return None
 
@@ -119,6 +131,8 @@ def patch(gamepath):
 
 
 def unpatch(gamepath):
+    validate_patch_files(gamepath)
+
     base_paths = get_base_paths(gamepath)
     with open(f"{gamepath}\\mod_config\\patch.json", "r") as patch_json:
         patch_json = json.loads(patch_json.read())
