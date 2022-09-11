@@ -62,8 +62,12 @@ def remove_patch():
     if (main.is_patched(gamepath) is False):
         messagebox.showerror("Error", "No patch is applied")
         return
-    main.unpatch()
-    update_patched_label()
+
+    if messagebox.askyesno(
+            "Remove Patch?",
+            "This returns the game to it's original state"):
+        main.unpatch(gamepath)
+        update_patched_label()
 
 
 def open_mod_folder():

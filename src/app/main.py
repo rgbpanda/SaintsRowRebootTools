@@ -91,8 +91,9 @@ def validate_patch_files(gamepath):
     try:
         patch = f"{gamepath}\\mod_config\\patch.json"
         with open(patch, "r") as patch_file:
-            json.loads(patch_file.read)
-    except Exception:
+            json.loads(patch_file.read())
+    except Exception as e:
+        print(e)
         with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
             f.write(json.dumps({}))
 
@@ -111,10 +112,14 @@ def patch(gamepath):
                 if parent in base_paths.keys():
                     parent_path = f"{base_paths[parent]}\\{parent}"
                     packfile = Packfile(parent_path)
-                    output = packfile.patch(f"{path}\\{name}")
+
+                    with open(f"{gamepath}\\mod_config\\patch.json", "r") as r:
+                        patch_json = json.loads(r.read())
+                    output = packfile.patch(f"{path}\\{name}", patch_json)
+
                     with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
-                        patch_json_data = json.dumps(output, indent=4)
-                        f.write(patch_json_data)
+                        patch_json = json.dumps(output, indent=4)
+                        f.write(patch_json)
                 else:
                     pass
                     #     extract file from parent
@@ -136,7 +141,13 @@ def unpatch(gamepath):
     base_paths = get_base_paths(gamepath)
     with open(f"{gamepath}\\mod_config\\patch.json", "r") as patch_json:
         patch_json = json.loads(patch_json.read())
-        for filename in patch_json.keys():
+
+        files = dict.fromkeys(patch_json).keys()
+        for filename in files:
             base_path = base_paths[filename]
             packfile = Packfile(f"{base_path}\\{filename}")
-            packfile.unpatch(patch_json[filename])
+            patch_json = packfile.unpatch(patch_json)
+        
+        with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
+            patch_json = json.dumps(patch_json, indent=4)
+            f.write(patch_json)

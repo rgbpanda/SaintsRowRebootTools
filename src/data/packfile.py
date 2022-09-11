@@ -89,21 +89,24 @@ class Packfile:
             file_entry.extract(output_directory, recursive)
             entries_bar.set_description(f"Extracting: {self.name}", refresh=True)
 
-    def patch(self, patchfile):
+    def patch(self, patchfile, patch_json):
         patchfile_name = os.path.basename(os.path.normpath(patchfile))
         patchfile_path = os.path.normpath(os.path.join(patchfile, "..\\"))
 
         file = self.entries_dict[patchfile_name]
 
-        patch = {}
         file_info = {
             "name": file.name,
             "size": file.size,
             "csize": file.csize,
-            "data_o": file.data_o,
-            "parent_end": self.end
+            "data_o": file.data_o
         }
-        patch[self.name] = file_info
+        if self.name not in patch_json:
+            patch_json[self.name] = {
+                "end": self.end,
+                "patched": []
+            }
+        patch_json[self.name]["patched"].append(file_info)
 
         with open(patchfile, "rb") as p:
             patch_data = p.read()
@@ -138,32 +141,36 @@ class Packfile:
             pf.write(data)
 
             print("Done!")
-        return patch
+        return patch_json
 
-    def unpatch(self, patch_entry):
-        patchfile_name = patch_entry["name"]
-        file = self.entries_dict[patchfile_name]
-
+    def unpatch(self, patch_json):
         with open(self.packfile_path, 'r+b') as pf:
-            print(f"Patching {self.name}")
-            pf.seek(file.data_ol)
+            for patch_entry in patch_json[self.name]["patched"]:
+                patchfile_name = patch_entry["name"]
+                file = self.entries_dict[patchfile_name]
 
-            print(f"Writing data offset: {hex(self.end - self.data_o)}")
-            pf.write(int.to_bytes(self.end - self.data_o, 8, 'little'))
+                print(f"Unpatching {self.name}")
+                pf.seek(file.data_ol)
 
-            print(f"Writing size: {hex(size)}")
-            pf.write(int.to_bytes(size, 8, 'little'))
+                print(f"Restoring {self.name} data offset: {hex(patch_entry['data_o'])}")
+                pf.write(int.to_bytes(patch_entry["data_o"], 8, 'little'))
 
-            print(f"Writing compressed size: {hex(csize)}")
-            pf.write(int.to_bytes(csize, 8, 'little'))
+                print(f"Restoring {self.name} size: {hex(patch_entry['size'])}")
+                pf.write(int.to_bytes(patch_entry["size"], 8, 'little'))
 
-            print("Writing new file data")
-            pf.seek(self.end)
-            pf.write(data)
+                print(f"Restoring {self.name} compressed size: {hex(patch_entry['csize'])}")
+                pf.write(int.to_bytes(patch_entry["csize"], 8, 'little'))
 
-            print("Done!")
-        print(self.end)
-        print(patch_entry)
+        with open(self.packfile_path, 'a') as pf:
+            pf.seek(patch_json[self.name]["end"])
+            print(f"Removing {self.name} patched data")
+            pf.truncate()
+            print(f"Done restoring {self.name}")
+            del patch_json[self.name]
+            return patch_json
+
+        print("unknown error occured unpatching")
+        return patch_json
 
     def close(self):
         self.stream.close()

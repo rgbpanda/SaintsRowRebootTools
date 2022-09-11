@@ -16,7 +16,7 @@ Patch - will patch game files with data in `mod_data`, and update patched file i
 
 Open Mod Folder - will open `mod_data` in sr5 and create it if it doesn't exist
 
-Unpatch - will read data in `mod_config` and remove applied patches
+Unpatch - will read data in `mod_config` and remove all applied patches
 
 # Build
 To Build exe for Windows:
