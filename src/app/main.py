@@ -45,7 +45,6 @@ def is_patched(gamepath):
             return True
         else:
             return False
-
     return None
 
 
@@ -126,7 +125,7 @@ def patch(gamepath):
         if file in to_patch:
             packfile = Packfile(f"{base_paths[file]}\\{file}")
             patch_json = packfile.patch(patch_json, to_patch[file])
-    
+
     with open(f"{gamepath}\\mod_config\\patch.json", "w") as r:
         patch_json = r.write(json.dumps(patch_json, indent=4))
 
@@ -143,7 +142,7 @@ def unpatch(gamepath):
             base_path = base_paths[filename]
             packfile = Packfile(f"{base_path}\\{filename}")
             patch_json = packfile.unpatch(patch_json)
-        
+
         with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
             patch_json = json.dumps(patch_json, indent=4)
             f.write(patch_json)
