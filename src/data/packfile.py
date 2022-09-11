@@ -16,7 +16,7 @@ from data.entry import Entry
 # name       - the packfile name
 # path       - location of packfile on disk
 # subpack    - whether or not is subpack
-# 
+#
 # data_o    - value of data offset
 # names_o   - value of the filenames offset
 #
