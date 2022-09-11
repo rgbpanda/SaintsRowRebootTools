@@ -4,6 +4,7 @@ import lz4.frame
 
 from app import helpers
 
+
 # Atrributes:
 #
 # parent    - the packfile which contains this file
@@ -15,7 +16,7 @@ from app import helpers
 # name_o - value of filename offset in parent
 # path_o - value of filepath offset in parent
 # data_o - value of data offset
-# 
+#
 # size_l   - location of size in parent
 # csize_l  - location of compressed size in parent
 # flags_l  - location of flags
@@ -79,40 +80,3 @@ class Entry:
             output_file = f"{path}\\{self.name}"
             with open(output_file, "wb") as f:
                 f.write(data)
-
-
-
-        # is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
-        #     ".str2_pc"
-        # )
-        # if is_packfile and recursive:
-        #     
-
-    # def read_data():s
-
-
-    #         path = mappings[path_offset]
-    #         path = path.decode("ascii")
-
-    #         file_data_offset = int.from_bytes(self.stream.read(8), "little")
-    #         file_data_offset += self.data_offset
-
-    #         size = int.from_bytes(self.stream.read(8), "little")
-    #         compressed_size = int.from_bytes(self.stream.read(8), "little")
-    #         self.stream.read(8)
-
-
-
-    #     if compressed_size != int("0xffffffffffffffff", 16):
-    #         compressor = LZ4FrameCompressor(block_size=BLOCKSIZE_MAX256KB, compression_level=9, auto_flush=True)
-    #         header = compressor.begin()
-    #         data = compressor.compress(new_data)
-    #         trail = b"\x00" * 4
-    #         data = b"".join([header, data, trail])
-    #         compressed_size = len(data)
-    #     else:
-    #         data = new_data
-
-    #     return name, data, compressed_size, update_start
-
-    # def write():

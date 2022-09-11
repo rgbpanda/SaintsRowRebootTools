@@ -1,8 +1,8 @@
 import os
 
 from tkinter import ttk, messagebox
-from tkinter import StringVar, IntVar
-from tkinter import Tk, END
+from tkinter import StringVar, IntVar, Label
+from tkinter import Tk, END, RIDGE
 from tkinter import filedialog as fd
 
 from app import main
@@ -30,14 +30,34 @@ input_box_value = StringVar()
 input_box_patch_value = StringVar()
 output_box_value = StringVar()
 recursive_enabled = IntVar()
-
+label_value = StringVar()
 
 def apply_patch():
-    main.patch(input_box_value.get())
+    main.patch(input_box_patch_value.get())
+    update_patched_label()
 
 
 def remove_patch():
-    game_dir = input_box_value.get()
+    main.unpatch(input_box_patch_value.get())
+    update_patched_label()
+
+
+def open_mod_folder():
+    main.open_mod_folder(input_box_patch_value.get())
+
+
+def update_patched_label():
+    gamepath = input_box_patch_value.get()
+    patched = main.is_patched(gamepath)
+
+    if patched:
+        label_value.set("Patched: Yes")
+
+    if patched is None:
+        label_value.set("Patched: ?")
+
+    if patched is False:
+        label_value.set("Patched: No")
 
 
 def extract_all():
@@ -47,9 +67,7 @@ def extract_all():
         "Extract Files?",
         "Are you sure you would like to extract all files from the selected directory? (This may take a while)",
     ):
-        main.extract_directory(
-            input_directory, output_directory, recursive_enabled.get()
-        )
+        main.extract(input_directory, output_directory, recursive_enabled.get())
 
 
 def select_input_dir_patch():
@@ -63,6 +81,7 @@ def select_input_dir_patch():
         directory = os.path.normpath(directory)
         input_box_patch.delete(0, END)
         input_box_patch.insert(0, directory)
+        update_patched_label()
 
 
 def select_input_dir():
@@ -138,28 +157,31 @@ recursive_box.grid(column=0, row=3, padx=(0, 0))
 extract_button.grid(column=1, columnspan=2, row=3, padx=(0, 20), pady=(20, 20))
 
 
-input_button = ttk.Button(
-    content2, text="Select Game Directory", command=select_input_dir
-)
-input_button.config(width=22)
+input_button_patch = ttk.Button(content2, text="Select Game Directory", command=select_input_dir_patch)
+input_button_patch.config(width=22)
 
-input_box_patch = ttk.Entry(content2, textvariable=input_box_value)
+input_box_patch = ttk.Entry(content2, textvariable=input_box_patch_value)
 input_box_patch.config(width=60)
 
+patched_label = Label(content2, textvariable=label_value, font=('Arial', 14), anchor='w')
 
 path = os.path.join(root_dir, "Program Files\\Epic Games\\SaintsRow\\sr5")
 if os.path.exists(path):
-    input_box.delete(0, END)
-    input_box.insert(0, path)
+    input_box_patch.delete(0, END)
+    input_box_patch.insert(0, path)
+    update_patched_label()
 
+mod_folder_button = ttk.Button(content2, text="Open Mod Folder", command=open_mod_folder)
 patch_button = ttk.Button(content2, text="Patch", command=apply_patch)
 unpatch_button = ttk.Button(content2, text="Unpatch", command=remove_patch)
 
 content2.grid(column=0, row=0)
 input_box_patch.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
-input_button.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
-patch_button.grid(column=0, row=2, columnspan=2, ipadx=5, ipady=5, padx=(0, 0), pady=(50, 20))
-unpatch_button.grid(column=2, row=2, columnspan=2, ipadx=5, ipady=5, padx=(0, 20), pady=(50, 20))
+patched_label.grid(column=0, row=2, padx=(0, 0), pady=(20, 0))
+input_button_patch.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
+patch_button.grid(column=0, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 0), pady=(20, 20))
+mod_folder_button.grid(column=1, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 20), pady=(20, 20))
+unpatch_button.grid(column=2, row=3, columnspan=2, ipadx=2, ipady=2, padx=(20, 20), pady=(20, 20))
 
 # run the application
 root.mainloop()

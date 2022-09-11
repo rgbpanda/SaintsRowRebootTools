@@ -52,3 +52,4 @@ def extract_subpack(data, output_directory, name):
     subpack_stream = io.BytesIO(data)
     packfile = Packfile(subpack_stream=subpack_stream, subpack_name=name)
     packfile.extract(output_directory, recursive=True)
+    packfile.close()

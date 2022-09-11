@@ -23,8 +23,10 @@ from data.entry import Entry
 # num_paths - number of paths
 # size      - size of file
 # csize     - compressed size of file
+# end       - end offset of the file
 #
-# entries     - list of file entries
+# entries      - list of file entries
+# entries_dict - same as entries but hashed by name
 class Packfile:
     NAMES_OL = 24
     DATA_OL = 64
@@ -44,6 +46,7 @@ class Packfile:
             self.name = subpack_name
         else:
             self.stream = open(packfile_path, 'rb')
+            self.packfile_path = packfile_path
             self.name = os.path.basename(os.path.normpath(packfile_path))
             self.path = os.path.normpath(os.path.join(packfile_path, "..\\"))
 
@@ -59,9 +62,15 @@ class Packfile:
         self.names_o = helpers.read(stream, Packfile.NAMES_OL, 4, reverse=True)
 
         self.entries = []
+        self.entries_dict = {}
         for f in range(0, self.num_files):
             start = (f * 48) + Packfile.HEADER_O
-            self.entries.append(Entry(self, start))
+            entry = Entry(self, start)
+            self.entries.append(entry)
+            self.entries_dict[entry.name] = entry
+
+        stream.seek(0, os.SEEK_END)
+        self.end = stream.tell()
 
     def validate(self):
         descriptor = helpers.read(self.stream, 0, 4)
@@ -80,110 +89,56 @@ class Packfile:
             file_entry.extract(output_directory, recursive)
             entries_bar.set_description(f"Extracting: {self.name}", refresh=True)
 
+    def patch(self, patchfile):
+        patchfile_name = os.path.basename(os.path.normpath(patchfile))
+        patchfile_path = os.path.normpath(os.path.join(patchfile, "..\\"))
 
-    # def patch(self, new, patch_path, json_path):
-    #     with open(new, 'rb') as new:
-    #         new_data = new.read()
+        file = self.entries_dict[patchfile_name]
 
-    #     mappings = self.filename_mappings(self.stream)
-    #     self.stream.seek(self.header_offset, 0)
+        patch = {}
+        file_info = {
+            "name": file.name,
+            "size": file.size,
+            "csize": file.csize,
+            "data_o": file.data_o,
+            "parent_end": self.end
+        }
+        patch[self.name] = file_info
 
-    #     for file in range(0, self.num_files):
-    #         name, data, compressed_size, update_start = self.get_file_data(self.stream, mappings, new_data)
-    #         filename = os.path.basename(os.path.normpath(new.name))
-    #         if name == filename:
-    #             self.update_patch_json(name, )
-    #             self.write_patch_data(name, self.stream, data, new_data, patch_path, compressed_size, update_start)
-    #             break
+        with open(patchfile, "rb") as p:
+            patch_data = p.read()
+            size = len(patch_data)
 
-            # name, data, compressed_size, update_start = self.get_file_data(self.stream, mappings, new_data)
-            # filename = os.path.basename(os.path.normpath(new.name))
-            # if name == filename:
-            #     self.update_patch_json(name, )
-            #     self.write_patch_data(name, self.stream, data, new_data, patch_path, compressed_size, update_start)
-            #     break
-    # def get_file_data(self, mappings, new_data):
+        if file.csize != int("0xffffffffffffffff", 16):
+            compressor = LZ4FrameCompressor(block_size=BLOCKSIZE_MAX256KB, compression_level=9, auto_flush=True)
+            header = compressor.begin()
+            data = compressor.compress(patch_data)
+            trail = b"\x00" * 4
+            data = b"".join([header, data, trail])
+            csize = len(data)
+        else:
+            csize = file.csize
+            data = patch_data
 
-    # def write_patch_data(self, name, data, new_data, patch_path, compressed_size, update_start):
-    #     print(f"Patching {name}")
-    #     self.stream.seek(0, io.SEEK_END)
-    #     new_location = self.stream.tell()
-    #     if new_location < 0:
-    #         new_location = new_location + 8196
+        with open(self.packfile_path, 'r+b') as pf:
+            print(f"Patching {self.name}")
+            print("Writing header data")
+            pf.seek(file.data_ol)
+            print(file.name)
+            print(hex(file.data_ol))
+            pf.write(int.to_bytes(self.end - self.data_o, 8, 'little'))
+            pf.write(int.to_bytes(size, 8, 'little'))
+            pf.write(int.to_bytes(csize, 8, 'little'))
 
-    #     new_location_bytes = int.to_bytes(new_location - self.data_offset, 8, 'little')
-    #     new_size = int.to_bytes(len(new_data), 8, 'little')
-    #     flag = int.to_bytes(256, 4, 'big')
+            print("Writing new file data")
+            pf.seek(self.end)
+            pf.write(data)
+            print("done!")
+        return patch
 
-    #     with open(patch_path, 'r+b') as file:
-    #         print(f"Patching {self.packfile_name}")
-    #         print("Writing header data")
-    #         file.seek(update_start)
-    #         file.write(new_location_bytes)
-    #         file.write(new_size)
-    #         file.write(int.to_bytes(compressed_size, 8, 'little'))
-    #         file.write(flag)
-    #         print("Writing new file data")
-    #         file.seek(new_location)
-    #         file.write(data)
-    #         print("done!")
+    def unpatch(self, patch_entry):
+        print(self.end)
+        print(patch_entry)
 
-
-            # name_offset = int.from_bytes(self.stream.read(8), "little")
-            # name_offset += self.filenames_offset
-            # name = self.mappings[name_offset]
-            # name = name.decode("ascii")
-
-            # path_offset = int.from_bytes(self.stream.read(8), "little")
-            # path_offset += self.filenames_offset
-
-            # path = self.mappings[path_offset]
-            # path = path.decode("ascii")
-
-            # file_data_offset = int.from_bytes(self.stream.read(8), "little")
-            # file_data_offset += self.data_offset
-
-            # size = int.from_bytes(self.stream.read(8), "little")
-            # compressed_size = int.from_bytes(self.stream.read(8), "little")
-            # self.stream.read(8)
-
-            # t.set_description(f"Extracting: {self.packfile_name}", refresh=True)
-            # self.write_file(file)
-            # self.write_file(
-            #     name,
-            #     path,
-            #     size,
-            #     compressed_size,
-            #     file_data_offset,
-            #     mm,
-            #     output_directory,
-            #     recursive,
-            # )
-
-    # def write_file(self, name, path, size, compressed_size, offset, mm, output_directory, recursive=True):
-    #     path = f"{output_directory}\\{path}"
-    #     if not os.path.exists(path):
-    #         os.makedirs(path)
-
-    #     mm.seek(offset)
-    #     output_file = f"{path}\\{name}"
-
-    #     if compressed_size != int("0xffffffffffffffff", 16):
-    #         file = mm.read(compressed_size)
-    #         file = lz4.frame.decompress(bytearray(file))
-    #         file = bytes(file)
-    #     else:
-    #         file = mm.read(size)
-
-    #     with open(output_file, "wb") as f:
-    #         f.write(file)
-
-    #     is_packfile = output_file.endswith(".vpp_pc") or output_file.endswith(
-    #         ".str2_pc"
-    #     )
-    #     if is_packfile and recursive:
-    #         extract_subfile(output_file, self.packfile_name, output_directory)
-
-    # def close(self):
-    #     self.stream.close()
-
+    def close(self):
+        self.stream.close()
