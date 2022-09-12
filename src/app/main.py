@@ -120,7 +120,10 @@ def patch(gamepath):
                 if parent.split(".")[-1] == "vpp_pc":
                     if parent not in to_patch.keys():
                         to_patch[parent] = {}
+                    
+                    if "root" not in to_patch[parent]:
                         to_patch[parent]["root"] = []
+
                     to_patch[parent]["root"].append(f"{path}\\{file}")
 
                 if parent.split(".")[-1] == "str2_pc":
