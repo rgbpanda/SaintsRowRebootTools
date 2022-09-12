@@ -192,8 +192,8 @@ class Packfile:
                 print(f"Done restoring {self.name}")
                 del patch_json[self.name]
                 return patch_json
-        except Exception as ex:
-            print(f"Unknown error occurred while unpatching: {ex}")
+        except Exception:
+            print(f"Unknown error occurred while unpatching")
         return patch_json
 
     def compress(self, entry, data):
