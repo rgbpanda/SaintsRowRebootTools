@@ -90,14 +90,39 @@ class Packfile:
             file_entry.extract(output_directory, recursive)
             entries_bar.set_description(f"Extracting: {self.name}", refresh=True)
 
-    def patch(self, patch_json, to_patch):
+    def extract_and_patch_subfiles(self, files, gamepath):
+        temp = f"{gamepath}\\mod_config\\temp"
+        if not os.path.exists(temp):
+            os.mkdir(temp)
+
+        created = []
+        for file in files.keys():
+            entry = self.entries_dict[file]
+            entry.extract(temp, False, preserve_path=False)
+            packfile = Packfile(f"{temp}\\{entry.name}")
+            to_patch = {
+                "root": files[file]
+            }
+            packfile.patch({}, to_patch, gamepath)
+            packfile.close()
+            created.append(f"{temp}\\{entry.name}")
+        return created
+
+    def patch(self, patch_json, to_patch, gamepath):
         if self.name not in patch_json:
             patch_json[self.name] = {
                 "end": self.end,
                 "patched": {}
             }
 
-        for patchfile in to_patch:
+        patchfiles = []
+        if "root" in to_patch:
+            patchfiles += to_patch["root"]
+
+        if "sub" in to_patch:
+            patchfiles += self.extract_and_patch_subfiles(to_patch["sub"], gamepath)
+
+        for patchfile in patchfiles:
             patchfile_name = os.path.basename(os.path.normpath(patchfile))
             patchfile_path = os.path.normpath(os.path.join(patchfile, "..\\"))
 
@@ -105,7 +130,6 @@ class Packfile:
 
             with open(patchfile, "rb") as p:
                 patch_data = p.read()
-                size = len(patch_data)
                 patch_hash = hashlib.md5(patch_data).hexdigest()
 
             patched = patch_json[self.name]["patched"]
@@ -117,20 +141,9 @@ class Packfile:
                     print(f"{file.name} already patched")
                     continue
 
-            if file.csize != int("0xffffffffffffffff", 16):
-                compressor = LZ4FrameCompressor(block_size=BLOCKSIZE_MAX256KB, compression_level=9, auto_flush=True)
-                header = compressor.begin()
-                data = compressor.compress(patch_data)
-                trail = b"\x00" * 4
-                data = b"".join([header, data, trail])
-                csize = len(data)
-                patch_size = csize
-            else:
-                csize = file.csize
-                patch_size = size
-                data = patch_data
+            data, size, csize, patch_size = self.compress(file, patch_data)
 
-            patch_offset = self.end  # where to write new data
+            patch_offset = self.stream.seek(0, io.SEEK_END)  # where to write new data
             if file.name in patched:
                 original_size = patched[file.name]["patch_size"]
                 if original_size >= patch_size:
@@ -150,21 +163,12 @@ class Packfile:
             with open(self.packfile_path, 'r+b') as pf:
                 print(f"Patching {self.name}")
                 pf.seek(file.data_ol)
-
-                print(f"Writing data offset: {hex(patch_offset - self.data_o)}")
-                pf.write(int.to_bytes(self.end - self.data_o, 8, 'little'))
-
-                print(f"Writing size: {hex(size)}")
+                pf.write(int.to_bytes(patch_offset - self.data_o, 8, 'little'))
                 pf.write(int.to_bytes(size, 8, 'little'))
-
-                print(f"Writing compressed size: {hex(csize)}")
                 pf.write(int.to_bytes(csize, 8, 'little'))
 
-                print("Writing new file data")
                 pf.seek(patch_offset)
                 pf.write(data)
-
-        print("Done!")
         return patch_json
 
     def unpatch(self, patch_json):
@@ -173,16 +177,10 @@ class Packfile:
             for name in patched.keys():
                 file = self.entries_dict[name]
 
-                print(f"Unpatching {self.name}")
+                print(f"Restoring {self.name}")
                 pf.seek(file.data_ol)
-
-                print(f"Restoring {self.name} data offset: {hex(patched[name]['data_o'])}")
                 pf.write(int.to_bytes(patched[name]["data_o"], 8, 'little'))
-
-                print(f"Restoring {self.name} size: {hex(patched[name]['size'])}")
                 pf.write(int.to_bytes(patched[name]["size"], 8, 'little'))
-
-                print(f"Restoring {self.name} compressed size: {hex(patched[name]['csize'])}")
                 pf.write(int.to_bytes(patched[name]["csize"], 8, 'little'))
 
         with open(self.packfile_path, 'a') as pf:
@@ -195,6 +193,21 @@ class Packfile:
 
         print("unknown error occured unpatching")
         return patch_json
+
+    def compress(self, entry, data):
+        size = len(data)
+        if entry.compressed:
+            compressor = LZ4FrameCompressor(block_size=BLOCKSIZE_MAX256KB, compression_level=9, auto_flush=True)
+            header = compressor.begin()
+            data = compressor.compress(data)
+            trail = b"\x00" * 4
+            data = b"".join([header, data, trail])
+            csize = len(data)
+            patch_size = csize
+        else:
+            csize = entry.csize
+            patch_size = size
+        return data, size, csize, patch_size
 
     def close(self):
         self.stream.close()

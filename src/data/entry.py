@@ -28,6 +28,7 @@ from app import helpers
 # csize  - compressed size of file
 # flags  - file flags
 #
+# compressed - whether or not compressed
 class Entry:
     def __init__(self, parent, start):
         self.parent = parent
@@ -60,8 +61,14 @@ class Entry:
         stream.seek(parent.HEADER_O + parent.names_o + self.path_o)
         self.path = helpers.read_string(stream, b'\x00')
 
-    def extract(self, output_directory, recursive):
-        path = f"{output_directory}\\{self.path}"
+        self.compressed = (self.csize != int("0xffffffffffffffff", 16))
+
+    def extract(self, output_directory, recursive, preserve_path=True):
+        if preserve_path:
+            path = f"{output_directory}\\{self.path}"
+        else:
+            path = output_directory
+
         if not os.path.exists(path):
             os.makedirs(path)
 

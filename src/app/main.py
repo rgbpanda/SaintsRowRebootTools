@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import gzip
+import shutil
 
 import app.helpers
 import subprocess
@@ -33,7 +34,6 @@ def mod_data_exists(gamepath):
 
 def is_patched(gamepath):
     if os.path.basename(gamepath) != "sr5":
-        print("Invalid game path location")
         return None
 
     if not os.path.exists(f"{gamepath}\\mod_config\\patch.json"):
@@ -49,21 +49,19 @@ def is_patched(gamepath):
 
 
 def open_mod_folder(gamepath):
-    if os.path.basename(gamepath) != "sr5":
-        print("Invalid game path location")
-        return
-
     mod_folder = f"{gamepath}\\mod_data"
     if not os.path.exists(mod_folder):
         os.mkdir(mod_folder)
     subprocess.Popen(f"explorer {mod_folder}")
 
 
-def validate_patch_files(gamepath):
+def validate_gamepath(gamepath):
     if os.path.basename(gamepath) != "sr5":
-        print("Invalid game path location")
-        return
+        return False
+    return True
 
+
+def validate_patch_files(gamepath):
     if not os.path.exists(f"{gamepath}\\mod_config"):
         os.mkdir(f"{gamepath}\\mod_config")
 
@@ -75,9 +73,9 @@ def validate_patch_files(gamepath):
         with open("dist\\parent_locations.gz", "rb") as f:
             # TODO: Copy from dist if not here
             data = gzip.decompress(f.read())
-            parent_dict = json.loads(data)
+            parents_dict = json.loads(data)
             with open(f"{gamepath}\\mod_config\\parent_locations.json", "w") as f:
-                f.write(json.dumps(parent_dict, indent=4))
+                f.write(json.dumps(parents_dict, indent=4))
 
     try:
         patch = f"{gamepath}\\mod_config\\patch.json"
@@ -86,6 +84,7 @@ def validate_patch_files(gamepath):
     except Exception:
         with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
             f.write(json.dumps({}))
+    return True
 
 
 def get_base_paths(gamepath):
@@ -100,7 +99,7 @@ def patch(gamepath):
     validate_patch_files(gamepath)
 
     with open(f"{gamepath}\\mod_config\\parent_locations.json", "r") as f:
-        parent_dict = json.loads(f.read())
+        parents_dict = json.loads(f.read())
 
     with open(f"{gamepath}\\mod_config\\patch.json", "r") as r:
         patch_json = json.loads(r.read())
@@ -111,23 +110,44 @@ def patch(gamepath):
     print("Finding data to patch")
     for path, dirs, files in os.walk(f"{gamepath}\\mod_data"):
         for file in files:
-            if file not in parent_dict:
+            if file not in parents_dict:
                 print("Invalid file name")
                 print(f"Cannot patch {path}\\{file}")
                 print("Cancelling")
                 return
-            for parent in parent_dict[file]:
-                if parent not in to_patch.keys():
-                    to_patch[parent] = []
-                to_patch[parent].append(f"{path}\\{file}")
+
+            for parent in parents_dict[file]:
+                if parent.split(".")[-1] == "vpp_pc":
+                    if parent not in to_patch.keys():
+                        to_patch[parent] = {}
+                        to_patch[parent]["root"] = []
+                    to_patch[parent]["root"].append(f"{path}\\{file}")
+
+                if parent.split(".")[-1] == "str2_pc":
+                    for root_vpp_pc in parents_dict[parent]:
+                        if root_vpp_pc not in to_patch.keys():
+                            to_patch[root_vpp_pc] = {}
+
+                        if "sub" not in to_patch[root_vpp_pc]:
+                            to_patch[root_vpp_pc]["sub"] = {}
+
+                        if parent not in to_patch[root_vpp_pc]["sub"]:
+                            to_patch[root_vpp_pc]["sub"][parent] = []
+                        to_patch[root_vpp_pc]["sub"][parent].append(f"{path}\\{file}")
 
     for file in base_paths:
         if file in to_patch:
             packfile = Packfile(f"{base_paths[file]}\\{file}")
-            patch_json = packfile.patch(patch_json, to_patch[file])
+            patch_json = packfile.patch(patch_json, to_patch[file], gamepath)
 
+    temp = f"{gamepath}\\mod_config\\temp"
+    if os.path.exists(temp):
+        shutil.rmtree(temp)
+ 
     with open(f"{gamepath}\\mod_config\\patch.json", "w") as r:
-        patch_json = r.write(json.dumps(patch_json, indent=4))
+        r.write(json.dumps(patch_json, indent=4))
+
+    print("Patch Complete!")
 
 
 def unpatch(gamepath):

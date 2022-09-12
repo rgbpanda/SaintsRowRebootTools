@@ -35,6 +35,10 @@ label_value = StringVar()
 
 def apply_patch():
     gamepath = input_box_patch_value.get()
+    if not main.validate_gamepath(gamepath):
+        messagebox.showerror("Error", "Invalid game path")
+        return
+
     if not main.mod_data_exists(gamepath):
         messagebox.showerror("Error", "No files in mod_data folder to patch")
         return
@@ -60,7 +64,11 @@ def apply_patch():
 
 def remove_patch():
     gamepath = input_box_patch_value.get()
-    if (main.is_patched(gamepath) is False):
+    if not main.validate_gamepath(gamepath):
+        messagebox.showerror("Error", "Invalid game path")
+        return
+
+    if not main.is_patched(gamepath):
         messagebox.showerror("Error", "No patch is applied")
         return
 
@@ -72,6 +80,11 @@ def remove_patch():
 
 
 def open_mod_folder():
+    gamepath = input_box_patch_value.get()
+    if not main.validate_gamepath(gamepath):
+        messagebox.showerror("Error", "Invalid game path")
+        return
+
     main.open_mod_folder(input_box_patch_value.get())
 
 
