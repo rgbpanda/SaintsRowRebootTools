@@ -161,7 +161,7 @@ class Packfile:
             }
 
             with open(self.packfile_path, 'r+b') as pf:
-                print(f"Patching {self.name}")
+                print(f"Patching {self.name}: {file.name}")
                 pf.seek(file.data_ol)
                 pf.write(int.to_bytes(patch_offset - self.data_o, 8, 'little'))
                 pf.write(int.to_bytes(size, 8, 'little'))
