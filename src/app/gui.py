@@ -88,6 +88,18 @@ def open_mod_folder():
     main.open_mod_folder(input_box_patch_value.get())
 
 
+def regen_parent_file():
+    gamepath = input_box_patch_value.get()
+    if not main.validate_gamepath(gamepath):
+        messagebox.showerror("Error", "Invalid game path")
+        return
+
+    if messagebox.askyesno(
+            "Regenerate parent data",
+            "This will reanalyze the file structure of the game (You probably don't need to run this and it takes a long time). Are you sure you want to continue?"):
+        main.get_parent_data(gamepath)
+
+
 def update_patched_label():
     gamepath = input_box_patch_value.get()
     patched = main.is_patched(gamepath)

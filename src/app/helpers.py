@@ -1,3 +1,7 @@
+from collections import defaultdict
+from itertools import chain
+from operator import methodcaller
+
 import mmap
 import io
 
@@ -53,3 +57,19 @@ def extract_subpack(data, output_directory, name):
     packfile = Packfile(subpack_stream=subpack_stream, subpack_name=name)
     packfile.extract(output_directory, recursive=True)
     packfile.close()
+
+
+def subpack_parents(data, name):
+    subpack_stream = io.BytesIO(data)
+    packfile = Packfile(subpack_stream=subpack_stream, subpack_name=name)
+    parent_data = packfile.parent_data()
+    packfile.close()
+    return parent_data
+
+
+def combine_dicts(dicts_list):
+    result = {}
+    for d in dicts_list:
+        for k, v in d.items():
+            result.setdefault(k, set()).add(v)
+    return result

@@ -87,3 +87,23 @@ class Entry:
             output_file = f"{path}\\{self.name}"
             with open(output_file, "wb") as f:
                 f.write(data)
+
+    def parent_data(self):
+        parents = []
+
+        parent_dict = {}
+        if self.name not in parent_dict:
+            parent_dict[self.name] = []
+        parent_dict[self.name].append(self.parent.name)
+        parents.append(parent_dict)
+        packfile_types = ["vpp_pc", "str2_pc"]
+        if (self.type in packfile_types):
+            stream = self.parent.stream
+            stream.seek(self.parent.data_o + self.data_o)
+            if self.csize != int("0xffffffffffffffff", 16):
+                data = stream.read(self.csize)
+                data = lz4.frame.decompress(data)
+            else:
+                data = stream.read(self.size)
+                parents.append(helpers.subpack_parents(data, self.name))
+        return parents

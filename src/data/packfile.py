@@ -56,8 +56,8 @@ class Packfile:
         stream = self.stream
         self.num_files = helpers.read(stream, Packfile.NUM_FILES_O, 4, reverse=True)
         self.num_paths = helpers.read(stream, Packfile.NUM_PATHS_O, 4, reverse=True)
-        self.size = helpers.read(stream, Packfile.SIZE_O, 4, reverse=True)
-        self.csize = helpers.read(stream, Packfile.CSIZE_O, 4, reverse=True)
+        self.size = helpers.read(stream, Packfile.SIZE_O, 8, reverse=True)
+        self.csize = helpers.read(stream, Packfile.CSIZE_O, 8, reverse=True)
 
         self.data_o = helpers.read(stream, Packfile.DATA_OL, 4, reverse=True)
         self.names_o = helpers.read(stream, Packfile.NAMES_OL, 4, reverse=True)
@@ -89,6 +89,15 @@ class Packfile:
         for file_entry in entries_bar:
             file_entry.extract(output_directory, recursive)
             entries_bar.set_description(f"Extracting: {self.name}", refresh=True)
+
+    def parent_data(self):
+        entries_bar = tqdm(self.entries, leave=(not self.subpack))
+        parents = []
+        for file_entry in entries_bar:
+            parents += file_entry.parent_data()
+            entries_bar.set_description(f"Analyzing: {self.name}", refresh=True)
+        parents_dict = helpers.combine_dicts(parents)
+        return parents_dict
 
     def extract_and_patch_subfiles(self, files, gamepath):
         temp = f"{gamepath}\\mod_config\\temp"

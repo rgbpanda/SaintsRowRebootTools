@@ -4,9 +4,9 @@ import json
 import gzip
 import shutil
 
-import app.helpers
 import subprocess
 
+from app import helpers
 from data.packfile import Packfile
 
 
@@ -19,7 +19,7 @@ def extract(input_directory, output_directory, recursive):
                 packfile = Packfile(filepath)
                 packfile.extract(output_directory, recursive)
                 packfile.close()
-    print("Done! You can close this window now")
+    print("Extraction Complete!")
 
 
 def mod_data_exists(gamepath):
@@ -143,10 +143,10 @@ def patch(gamepath):
             packfile = Packfile(f"{base_paths[file]}\\{file}")
             patch_json = packfile.patch(patch_json, to_patch[file], gamepath)
 
-    temp = f"{gamepath}\\mod_config\\temp"
-    if os.path.exists(temp):
-        shutil.rmtree(temp)
- 
+    # temp = f"{gamepath}\\mod_config\\temp"
+    # if os.path.exists(temp):
+    #     shutil.rmtree(temp)
+
     with open(f"{gamepath}\\mod_config\\patch.json", "w") as r:
         r.write(json.dumps(patch_json, indent=4))
 
@@ -169,3 +169,22 @@ def unpatch(gamepath):
         with open(f"{gamepath}\\mod_config\\patch.json", "w") as f:
             patch_json = json.dumps(patch_json, indent=4)
             f.write(patch_json)
+
+
+def get_parent_data(gamepath):
+    for path, dirs, files in os.walk(gamepath):
+        output_jsons = []
+        for name in files:
+            if name.endswith(".vpp_pc"):
+                filepath = os.path.join(path, name)
+                packfile = Packfile(filepath)
+                output_jsons.append(packfile.parent_data())
+                packfile.close()
+
+    print("Combining data...")
+    output_json = helpers.combine_dicts(output_jsons)
+    with open("dist/parent_locations.json", "w") as f:
+        print("Writing file...")
+        f.write(json.dumps(output_json, indent=4))
+
+    print("Done!")
