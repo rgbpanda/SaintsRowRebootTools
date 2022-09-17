@@ -235,6 +235,9 @@ patch_button.grid(column=0, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 0), 
 unpatch_button = ttk.Button(content2, text="Unpatch", command=remove_patch)
 unpatch_button.grid(column=2, row=3, columnspan=2, ipadx=2, ipady=2, padx=(20, 20), pady=(20, 20))
 
+regen_parent_button = ttk.Button(content2, text="Regenerate Parent Data", command=regen_parent_file)
+regen_parent_button.grid(column=3, row=2, columnspan=2, ipadx=2, ipady=2, padx=(0, 20), pady=(20, 20))
+
 # Input directory box
 input_box_patch = ttk.Entry(content2, textvariable=input_box_patch_value)
 input_box_patch.config(width=60)
