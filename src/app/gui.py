@@ -166,32 +166,34 @@ def select_output_dir():
         output_box.insert(0, directory)
 
 
-input_button = ttk.Button(
-    content, text="Select Input Directory", command=select_input_dir
-)
+#
+# GUI for Extract
+#
+content.grid(column=0, row=0)
+
+
+# Buttons
+input_button = ttk.Button(content, text="Select Input Directory", command=select_input_dir)
 input_button.config(width=22)
+input_button.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
 
-input_box = ttk.Entry(content, textvariable=input_box_value)
-input_box.config(width=60)
-
-output_button = ttk.Button(
-    content, text="Select Output Directory", command=select_output_dir
-)
+output_button = ttk.Button(content, text="Select Output Directory", command=select_output_dir)
 output_button.config(width=22)
-output_box = ttk.Entry(content, textvariable=output_box_value)
-output_box.config(width=60)
-
-path = os.path.join(root_dir, "Program Files\\Epic Games\\SaintsRow\\sr5\\data")
-if os.path.exists(path):
-    input_box.delete(0, END)
-    input_box.insert(0, path)
-
-    output_path = os.path.normpath(os.path.join(path, "../", "extracted_data"))
-    output_box.delete(0, END)
-    output_box.insert(0, output_path)
+output_button.grid(column=3, row=2, padx=(0, 20), pady=(20, 20))
 
 extract_button = ttk.Button(content, text="Extract All", command=extract_all)
+extract_button.grid(column=1, columnspan=2, row=3, padx=(0, 20), pady=(20, 20))
 
+# Boxes
+input_box = ttk.Entry(content, textvariable=input_box_value)
+input_box.config(width=60)
+input_box.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
+
+output_box = ttk.Entry(content, textvariable=output_box_value)
+output_box.config(width=60)
+output_box.grid(column=0, row=2, columnspan=3, padx=(20, 20), pady=(20, 20))
+
+# Recursive Checkbox
 recursive_box = ttk.Checkbutton(
     content,
     text="Enable Recursive",
@@ -201,41 +203,53 @@ recursive_box = ttk.Checkbutton(
 )
 recursive_box.state(["!alternate"])
 recursive_box.state(["!selected"])
-
-content.grid(column=0, row=0)
-input_box.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
-input_button.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
-output_box.grid(column=0, row=2, columnspan=3, padx=(20, 20), pady=(20, 20))
-output_button.grid(column=3, row=2, padx=(0, 20), pady=(20, 20))
 recursive_box.grid(column=0, row=3, padx=(0, 0))
-extract_button.grid(column=1, columnspan=2, row=3, padx=(0, 20), pady=(20, 20))
+
+# Set default extraction path
+path = os.path.join(root_dir, "Program Files\\Epic Games\\SaintsRow\\sr5\\data")
+if os.path.exists(path):
+    input_box.delete(0, END)
+    input_box.insert(0, path)
+
+    output_path = os.path.normpath(os.path.join(path, "../", "extracted_data"))
+    output_box.delete(0, END)
+    output_box.insert(0, output_path)
 
 
+#
+# GUI for Patch
+#
+content2.grid(column=0, row=0)
+
+# Buttons
 input_button_patch = ttk.Button(content2, text="Select Game Directory", command=select_input_dir_patch)
 input_button_patch.config(width=22)
+input_button_patch.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
 
+mod_folder_button = ttk.Button(content2, text="Open Mod Folder", command=open_mod_folder)
+mod_folder_button.grid(column=1, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 20), pady=(20, 20))
+
+patch_button = ttk.Button(content2, text="Patch", command=apply_patch)
+patch_button.grid(column=0, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 0), pady=(20, 20))
+
+unpatch_button = ttk.Button(content2, text="Unpatch", command=remove_patch)
+unpatch_button.grid(column=2, row=3, columnspan=2, ipadx=2, ipady=2, padx=(20, 20), pady=(20, 20))
+
+# Input directory box
 input_box_patch = ttk.Entry(content2, textvariable=input_box_patch_value)
 input_box_patch.config(width=60)
+input_box_patch.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
 
+# Patched Yes/No
 patched_label = Label(content2, textvariable=label_value, font=('Arial', 14), anchor='w')
+patched_label.grid(column=0, row=2, padx=(0, 0), pady=(20, 0))
 
+# Set default directory
 path = os.path.join(root_dir, "Program Files\\Epic Games\\SaintsRow\\sr5")
 if os.path.exists(path):
     input_box_patch.delete(0, END)
     input_box_patch.insert(0, path)
     update_patched_label()
-
-mod_folder_button = ttk.Button(content2, text="Open Mod Folder", command=open_mod_folder)
-patch_button = ttk.Button(content2, text="Patch", command=apply_patch)
-unpatch_button = ttk.Button(content2, text="Unpatch", command=remove_patch)
-
-content2.grid(column=0, row=0)
-input_box_patch.grid(column=0, row=1, columnspan=3, padx=(20, 20), pady=(20, 0))
-patched_label.grid(column=0, row=2, padx=(0, 0), pady=(20, 0))
-input_button_patch.grid(column=3, row=1, padx=(0, 20), pady=(20, 0))
-patch_button.grid(column=0, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 0), pady=(20, 20))
-mod_folder_button.grid(column=1, row=3, columnspan=2, ipadx=2, ipady=2, padx=(0, 20), pady=(20, 20))
-unpatch_button.grid(column=2, row=3, columnspan=2, ipadx=2, ipady=2, padx=(20, 20), pady=(20, 20))
 
 # run the application
 root.mainloop()
