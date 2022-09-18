@@ -182,8 +182,17 @@ def get_parent_data(gamepath):
                 packfile.close()
 
     output_json = helpers.combine_dicts(output_jsons)
-    with open("dist/parent_locations.json", "w") as f:
-        print("Writing file...")
-        f.write(json.dumps(output_json, indent=4))
+
+    mod_config = f"{gamepath}\\mod_config"
+    if os.path.exists(f"{mod_config}\\parent_locations.json"):
+        os.remove(f"{mod_config}\\parent_locations.json")
+
+    if os.path.exists(f"{mod_config}\\parent_locations.gz"):
+        os.remove(f"{mod_config}\\parent_locations.gz")
+
+    with open("dist\\parent_locations.gz", "wb") as f:
+        data = json.dumps(output_json, indent=4).encode('utf-8')
+        compressed_data = gzip.compress(data)
+        f.write(compressed_data)
 
     print("Done!")
