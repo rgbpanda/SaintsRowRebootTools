@@ -96,8 +96,7 @@ class Packfile:
         for file_entry in entries_bar:
             parents += file_entry.parent_data()
             entries_bar.set_description(f"Analyzing: {self.name}", refresh=True)
-        parents_dict = helpers.combine_dicts(parents)
-        return parents_dict
+        return parents
 
     def extract_and_patch_subfiles(self, files, gamepath):
         temp = f"{gamepath}\\mod_config\\temp"

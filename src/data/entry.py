@@ -105,5 +105,5 @@ class Entry:
                 data = lz4.frame.decompress(data)
             else:
                 data = stream.read(self.size)
-                parents.append(helpers.subpack_parents(data, self.name))
+                parents += helpers.subpack_parents(data, self.name)
         return parents

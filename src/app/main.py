@@ -172,16 +172,15 @@ def unpatch(gamepath):
 
 
 def get_parent_data(gamepath):
+    output_jsons = []
     for path, dirs, files in os.walk(gamepath):
-        output_jsons = []
         for name in files:
             if name.endswith(".vpp_pc"):
                 filepath = os.path.join(path, name)
                 packfile = Packfile(filepath)
-                output_jsons.append(packfile.parent_data())
+                output_jsons += packfile.parent_data()
                 packfile.close()
 
-    print("Combining data...")
     output_json = helpers.combine_dicts(output_jsons)
     with open("dist/parent_locations.json", "w") as f:
         print("Writing file...")

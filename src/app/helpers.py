@@ -1,6 +1,7 @@
 from collections import defaultdict
 from itertools import chain
 from operator import methodcaller
+from tqdm import tqdm
 
 import mmap
 import io
@@ -68,8 +69,13 @@ def subpack_parents(data, name):
 
 
 def combine_dicts(dicts_list):
-    result = {}
-    for d in dicts_list:
-        for k, v in d.items():
-            result.setdefault(k, set()).add(v)
-    return result
+    output = {}
+    dict_list_bar = tqdm(dicts_list, leave=True)
+    dict_list_bar.set_description("Processing Data")
+    for entry in dict_list_bar:
+        for key, value in entry.items():
+            if key not in output:
+                output[key] = value
+            else:
+                output[key] = output[key] + value
+    return output
