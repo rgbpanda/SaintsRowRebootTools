@@ -39,13 +39,15 @@ def is_patched(gamepath):
     if not os.path.exists(f"{gamepath}\\mod_config\\patch.json"):
         return False
 
-    with open(f"{gamepath}\\mod_config\\patch.json", "r") as patch_json:
-        patch_dict = patch_json.read()
-        if patch_dict != "{}":
-            return True
-        else:
-            return False
-    return None
+    try:
+        with open(f"{gamepath}\\mod_config\\patch.json", "r") as patch_json:
+            patch_dict = patch_json.read()
+            if patch_dict != "{}":
+                return True
+            else:
+                return False
+    except Exception:
+        return None
 
 
 def open_mod_folder(gamepath):

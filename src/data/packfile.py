@@ -180,26 +180,28 @@ class Packfile:
         return patch_json
 
     def unpatch(self, patch_json):
-        with open(self.packfile_path, 'r+b') as pf:
-            patched = patch_json[self.name]["patched"]
-            for name in patched.keys():
-                file = self.entries_dict[name]
 
-                print(f"Restoring {self.name}")
-                pf.seek(file.data_ol)
-                pf.write(int.to_bytes(patched[name]["data_o"], 8, 'little'))
-                pf.write(int.to_bytes(patched[name]["size"], 8, 'little'))
-                pf.write(int.to_bytes(patched[name]["csize"], 8, 'little'))
+        try:
+            with open(self.packfile_path, 'r+b') as pf:
+                patched = patch_json[self.name]["patched"]
+                for name in patched.keys():
+                    file = self.entries_dict[name]
 
-        with open(self.packfile_path, 'a') as pf:
-            pf.seek(patch_json[self.name]["end"])
-            print(f"Removing {self.name} patched data")
-            pf.truncate()
-            print(f"Done restoring {self.name}")
-            del patch_json[self.name]
-            return patch_json
+                    print(f"Restoring {self.name}")
+                    pf.seek(file.data_ol)
+                    pf.write(int.to_bytes(patched[name]["data_o"], 8, 'little'))
+                    pf.write(int.to_bytes(patched[name]["size"], 8, 'little'))
+                    pf.write(int.to_bytes(patched[name]["csize"], 8, 'little'))
 
-        print("unknown error occured unpatching")
+            with open(self.packfile_path, 'a') as pf:
+                pf.seek(patch_json[self.name]["end"])
+                print(f"Removing {self.name} patched data")
+                pf.truncate()
+                print(f"Done restoring {self.name}")
+                del patch_json[self.name]
+                return patch_json
+        except Exception:
+            print(f"Unknown error occurred while unpatching")
         return patch_json
 
     def compress(self, entry, data):
